@@ -1,0 +1,19 @@
+name: Docker Image Publish
+
+on: [push]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Deploy the Docker image to GitHub Package Registry (latest tag)
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: kammerjaeger/docker-bind/docker-bind
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        registry: docker.pkg.github.com
