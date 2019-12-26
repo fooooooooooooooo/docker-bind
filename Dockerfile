@@ -1,17 +1,17 @@
-FROM ubuntu:bionic-20190612 AS add-apt-repositories
+FROM ubuntu:latest AS add-apt-repositories
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y gnupg \
  && apt-key adv --fetch-keys http://www.webmin.com/jcameron-key.asc \
  && echo "deb http://download.webmin.com/download/repository sarge contrib" >> /etc/apt/sources.list
 
-FROM ubuntu:bionic-20190612
+FROM ubuntu:latest
 
 LABEL maintainer="sameer@damagehead.com"
 
 ENV BIND_USER=bind \
-    BIND_VERSION=9.11.3 \
-    WEBMIN_VERSION=1.9 \
+    BIND_VERSION=9.14.9 \
+    WEBMIN_VERSION=1.930 \
     DATA_DIR=/data
 
 COPY --from=add-apt-repositories /etc/apt/trusted.gpg /etc/apt/trusted.gpg
