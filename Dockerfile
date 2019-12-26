@@ -10,7 +10,7 @@ FROM ubuntu:eoan-20191127
 LABEL maintainer="sameer@damagehead.com"
 
 ENV BIND_USER=bind \
-    BIND_VERSION=9.14.9 \
+    BIND_VERSION=9.11 \
     WEBMIN_VERSION=1.930 \
     DATA_DIR=/data
 
