@@ -6,27 +6,30 @@ set -e
 # (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
 #  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
 file_env() {
-	local var="$1"
-	local fileVar="${var}_FILE"
-	local def="${2:-}"
-	if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
-		echo >&2 "error: both $var and $fileVar are set (but are exclusive)"
-		exit 1
-	fi
-	local val="$def"
-	if [ "${!var:-}" ]; then
-		val="${!var}"
-	elif [ "${!fileVar:-}" ]; then
-		val="$(< "${!fileVar}")"
-	fi
-	export "$var"="$val"
-	unset "$fileVar"
+  local var="$1"
+  local fileVar="${var}_FILE"
+  local def="${2:-}"
+  if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
+    echo >&2 "error: both $var and $fileVar are set (but are exclusive)"
+    exit 1
+  fi
+  local val="$def"
+  if [ "${!var:-}" ]; then
+    val="${!var}"
+  elif [ "${!fileVar:-}" ]; then
+    val="$(< "${!fileVar}")"
+  fi
+  export "$var"="$val"
+  unset "$fileVar"
 }
 
 file_env 'ROOT_PASSWORD'
 
 ROOT_PASSWORD=${ROOT_PASSWORD:-password}
 WEBMIN_ENABLED=${WEBMIN_ENABLED:-true}
+WEBMIN_INIT_SSL_ENABLED=${WEBMIN_INIT_SSL_ENABLED:-true}
+WEBMIN_INIT_REDIRECT_PORT=${WEBMIN_INIT_REDIRECT_PORT:-10000}
+WEBMIN_INIT_REFERERS=${WEBMIN_INIT_REFERERS:-NONE}
 
 BIND_DATA_DIR=${DATA_DIR}/bind
 WEBMIN_DATA_DIR=${DATA_DIR}/webmin
@@ -64,18 +67,45 @@ create_webmin_data_dir() {
   ln -sf ${WEBMIN_DATA_DIR}/etc /etc/webmin
 }
 
+disable_webmin_ssl() {
+  sed -i 's/ssl=1/ssl=0/g' /etc/webmin/miniserv.conf
+}
+
+set_webmin_redirect_port() {
+  echo "redirect_port=$WEBMIN_INIT_REDIRECT_PORT" >> /etc/webmin/miniserv.conf
+}
+
+set_webmin_referers() {
+  echo "referers=$WEBMIN_INIT_REFERERS" >> /etc/webmin/config
+}
+
 set_root_passwd() {
   echo "root:$ROOT_PASSWORD" | chpasswd
 }
 
 create_pid_dir() {
-  mkdir -m 0775 -p /var/run/named
+  mkdir -p /var/run/named
+  chmod 0775 /var/run/named
   chown root:${BIND_USER} /var/run/named
 }
 
 create_bind_cache_dir() {
-  mkdir -m 0775 -p /var/cache/bind
+  mkdir -p /var/cache/bind
+  chmod 0775 /var/cache/bind
   chown root:${BIND_USER} /var/cache/bind
+}
+
+first_init() {
+  if [ ! -f /data/.initialized ]; then
+    set_webmin_redirect_port
+    if [ "${WEBMIN_INIT_SSL_ENABLED}" == "false" ]; then
+      disable_webmin_ssl
+    fi
+    if [ "${WEBMIN_INIT_REFERERS}" != "NONE" ]; then
+      set_webmin_referers
+    fi
+    touch /data/.initialized
+  fi
 }
 
 create_pid_dir
@@ -84,10 +114,10 @@ create_bind_cache_dir
 
 # allow arguments to be passed to named
 if [[ ${1:0:1} = '-' ]]; then
-  EXTRA_ARGS="$@"
+  EXTRA_ARGS="$*"
   set --
-elif [[ ${1} == named || ${1} == $(which named) ]]; then
-  EXTRA_ARGS="${@:2}"
+elif [[ ${1} == named || ${1} == "$(command -v named)" ]]; then
+  EXTRA_ARGS="${*:2}"
   set --
 fi
 
@@ -95,13 +125,14 @@ fi
 if [[ -z ${1} ]]; then
   if [ "${WEBMIN_ENABLED}" == "true" ]; then
     create_webmin_data_dir
+    first_init
     set_root_passwd
     echo "Starting webmin..."
     /etc/init.d/webmin start
   fi
 
   echo "Starting named..."
-  exec $(which named) -u ${BIND_USER} -g ${EXTRA_ARGS}
+  exec "$(command -v named)" -u ${BIND_USER} -g ${EXTRA_ARGS}
 else
   exec "$@"
 fi

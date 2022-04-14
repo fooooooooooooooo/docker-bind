@@ -1,6 +1,6 @@
 [![Circle CI](https://circleci.com/gh/sameersbn/docker-bind.svg?style=shield)](https://circleci.com/gh/sameersbn/docker-bind) [![Docker Repository on Quay.io](https://quay.io/repository/sameersbn/bind/status "Docker Repository on Quay.io")](https://quay.io/repository/sameersbn/bind)
 
-# sameersbn/bind:9.11.3-20190706
+# sameersbn/bind:9.16.1-20200524
 
 - [Introduction](#introduction)
   - [Contributing](#contributing)
@@ -49,7 +49,7 @@ Automated builds of the image are available on [Dockerhub](https://hub.docker.co
 > **Note**: Builds are also available on [Quay.io](https://quay.io/repository/sameersbn/bind)
 
 ```bash
-docker pull sameersbn/bind:9.11.3-20190706
+docker pull sameersbn/bind:9.16.1-20200524
 ```
 
 Alternatively you can build the image yourself.
@@ -66,7 +66,7 @@ Start BIND using:
 docker run --name bind -d --restart=always \
   --publish 53:53/tcp --publish 53:53/udp --publish 10000:10000/tcp \
   --volume /srv/docker/bind:/data \
-  sameersbn/bind:9.11.3-20190706
+  sameersbn/bind:9.16.1-20200524
 ```
 
 *Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
@@ -85,7 +85,7 @@ You can customize the launch command of BIND server by specifying arguments to `
 docker run --name bind -it --rm \
   --publish 53:53/tcp --publish 53:53/udp --publish 10000:10000/tcp \
   --volume /srv/docker/bind:/data \
-  sameersbn/bind:9.11.3-20190706 -h
+  sameersbn/bind:9.16.1-20200524 -h
 ```
 
 ## Persistence
@@ -101,6 +101,20 @@ mkdir -p /srv/docker/bind
 chcon -Rt svirt_sandbox_file_t /srv/docker/bind
 ```
 
+## Reverse Proxying
+
+If you need to run Webmin behind a reverse-proxy such as Nginx, you can tweak the following environment variables:
+
+* `WEBMIN_INIT_SSL_ENABLED`: If Webmin should be served via SSL or not. Defaults to `true`. 
+   If you do the SSL termination at an earlier stage, set this to false.
+
+* `WEBMIN_INIT_REDIRECT_PORT`: The port Webmin is served from. 
+   Set this to your reverse proxy port, such as `443`. Defaults to `10000`.
+
+* `WEBMIN_INIT_REFERERS`: Sets the allowed referrers to Webmin. 
+   Set this to your domain name of the reverse proxy. Example: `mywebmin.example.com`. 
+   Defaults to empty (no referrer).
+
 # Maintenance
 
 ## Upgrading
@@ -110,7 +124,7 @@ To upgrade to newer releases:
   1. Download the updated Docker image:
 
   ```bash
-  docker pull sameersbn/bind:9.11.3-20190706
+  docker pull sameersbn/bind:9.16.1-20200524
   ```
 
   2. Stop the currently running image:
@@ -130,7 +144,7 @@ To upgrade to newer releases:
   ```bash
   docker run -name bind -d \
     [OPTIONS] \
-    sameersbn/bind:9.11.3-20190706
+    sameersbn/bind:9.16.1-20200524
   ```
 
 ## Shell Access
