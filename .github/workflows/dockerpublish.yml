@@ -3,15 +3,23 @@ name: Docker Image Publish
 on: [push]
 
 jobs:
-  build:
+  push-image:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: "."
     steps:
-      - uses: actions/checkout@master
-      - name: Deploy the Docker image to GitHub Package Registry (latest tag)
-        uses: elgohr/Publish-Docker-Github-Action@v5
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@main
+
+      - name: "Login to GitHub Container Registry"
+        uses: docker/login-action@v1
         with:
-          name: fooooooooooooooo/docker-bind/docker-bind
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: "Build Image"
+        run: |
+          docker build . --tag ghcr.io/fooooooooooooooo/docker-bind:latest
+          docker push ghcr.io/fooooooooooooooo/docker-bind:latest
