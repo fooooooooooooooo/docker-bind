@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Deploy the Docker image to GitHub Package Registry (latest tag)
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v5
       with:
         name: kammerjaeger/docker-bind/docker-bind
         username: ${{ github.actor }}
